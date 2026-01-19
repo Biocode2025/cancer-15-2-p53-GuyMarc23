@@ -1,0 +1,71 @@
+import random
+
+def read_fasta():
+    f = open("data/p53.txt", "r")
+    lines = f.readlines()
+    f.close()
+    seq = ""
+    for line in lines:
+        if not line.startswith(">"):
+            seq += line.strip()
+    return seq
+
+def read_codon_table():
+    f = open("data/codontable.txt", "r")
+    lines = f.readlines()
+    f.close()
+    table = {}
+    for line in lines:
+        parts = line.strip().split()
+        table[parts[0]] = parts[1]
+    return table
+
+def transcribe(dna):
+    return dna.replace("T", "U")
+
+def translate(rna, codon_table):
+    protein = ""
+    for i in range(0, len(rna)-2, 3):
+        codon = rna[i:i+3]
+        aa = codon_table[codon]
+        if aa == "*":
+            break
+        protein += aa
+    return protein
+
+def mutate_dna(dna, n):
+    mut_dna = list(dna)
+    bases = ["A", "T", "C", "G"]
+    for _ in range(n):
+        i = random.randint(0, len(dna)-1)
+        current = dna[i]
+        j = random.randint(0, 3)
+        while bases[j] == current:
+            j = random.randint(0, 3)
+        mut_dna[i] = bases[j]
+    return "".join(mut_dna)
+
+dna = read_fasta()
+rna = transcribe(dna)
+
+codon_table = read_codon_table()
+protein_original = translate(rna, codon_table)
+mutated_dna = mutate_dna(dna, 3)
+mutated_rna = transcribe(mutated_dna)
+protein_mutated = translate(mutated_rna, codon_table)
+
+
+shortened = len(protein_mutated) < len(protein_original)
+
+f = open("results/mutated_p53.fasta", "w")
+f.write(">Original protein\n")
+f.write(protein_original + "\n\n")
+f.write(">Mutated protein\n")
+f.write(protein_mutated + "\n\n")
+f.write(">Conclusion\n")
+if shortened:
+    f.write("The protein is shortened.\n")
+else:
+    f.write("The protein is not shortened.\n")
+f.close()
+
